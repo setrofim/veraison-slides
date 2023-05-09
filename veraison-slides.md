@@ -511,14 +511,14 @@ import (
 	"github.com/veraison/services/plugin"
 )
 
-type MyEvidenceHandler struct {}
-
-// Implementation of IEvidenceHandler for MyEvidenceHandler
-// ...
-
 type MyEndrosementHandler struct {}
 
 // Implementation of IEndrosementHandler for MyEndrosementHandler
+// ...
+
+type MyEvidenceHandler struct {}
+
+// Implementation of IEvidenceHandler for MyEvidenceHandler
 // ...
 
 func main() {
@@ -564,7 +564,38 @@ Decode -- The "meat" of this implementation, this extracts endorsements and
 
 ---
 
-<!-- _class: evensmallercode -->
+## Endorsements & Trust Anchors
+
+```go
+type EndorsementHandlerResponse struct {
+	ReferenceValues []Endorsement
+	TrustAnchors    []Endorsement
+}
+
+type Endorsement struct {
+	Scheme string
+	Type   int32
+	SubType    string
+	Attributes map[string]interface{}
+}
+
+```
+
+<!--
+Note: these structure have been altered from their actual definitions in code
+for simplicity.
+
+Endorsement field:
+
+Scheme -- the name of the scheme the endorsement is associated with
+Type -- an enum indicating whether this is a "RefVal" or a "TA" (it's int32
+        because that's how enums are represented in protobuf)
+SubType -- a scheme-specific indication of what the value represents
+Attributes -- the actual value of the endorsement.
+
+-->
+
+---
 
 ## Evidence Handler
 ```go
@@ -577,19 +608,13 @@ type IEvidenceHandler interface {
 	SynthKeysFromTrustAnchor(tenantID string, ta *Endorsement) ([]string, error)
 
 	GetTrustAnchorID(token *AttestationToken) (string, error)
-	ExtractClaims(
-		token *AttestationToken,
-		trustAnchor string,
-	) (*ExtractedClaims, error)
+	ExtractClaims(token *AttestationToken, trustAnchor string) (*ExtractedClaims, error)
 	ValidateEvidenceIntegrity(
 		token *AttestationToken,
 		trustAnchor string,
 		endorsementsStrings []string,
 	) error
-	AppraiseEvidence(
-		ec *EvidenceContext,
-		endorsements []string,
-	) (*ear.AttestationResult, error)
+	AppraiseEvidence(ec *EvidenceContext, endorsements []string) (*ear.AttestationResult, error)
 }
 ```
 <!--
@@ -613,6 +638,47 @@ AppraiseEvidence - Produce the final appraisal by evaluating the extracted
 -->
 
 ---
+
+## Attestation Token
+
+```go
+type AttestationToken struct {
+	TenantId  string
+	Data      []byte
+	MediaType string
+	Nonce     []byte
+}
+
+type ExtractedClaims struct {
+	ClaimsSet   map[string]interface{}
+	ReferenceID string
+}
+```
+<!--
+Note: these structure have been altered from their actual definitions in code
+for simplicity.
+
+AttestationToken:
+
+TenantId --  The tenant id (multi-tenancy currently isn't implemented in Veraison,
+but this field will be used when  it finally is; currently it's just 1). This
+should be used in SynthKeys* methods.
+
+Data -- the bytes of the token (sent in the HTTP request body)
+
+MediaType -- media type of the token (extracted form the Content-Type header)
+
+Nonce -- established during session creation; used to prevent replay attacks.
+
+ExtractedClaims:
+
+ClaimSet -- actual claims extracted from the token
+ReferenceID -- used to get RefVals associated with theses claims
+
+-->
+
+---
+
 <!-- _class: lead-->
 <!--footer: "" -->
 # Libraries & Tooling
