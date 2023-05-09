@@ -639,7 +639,7 @@ AppraiseEvidence - Produce the final appraisal by evaluating the extracted
 
 ---
 
-## Attestation Token
+## Attestation Token & Claims
 
 ```go
 type AttestationToken struct {
