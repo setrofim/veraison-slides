@@ -51,8 +51,8 @@ section.smallerbullet li {
 - A remote attestation verification service
     - RATS Architecture compliant
     - Flexible deployment model
-- Open Source (Apache v2.0)
-- A Confidential Compute Consortium project
+- Open Source (Apache v2.0) & Open Governance
+- A Confidential Computing Consortium project
 
 <!--
 
@@ -93,6 +93,7 @@ Confidential Computing: Hardware-Based Trusted Execution for Applications and Da
     - Hardware & Software aspects of the TCB are "correct"
 - The means to establish trustworthiness is Attestation
    - Attestation produces evidence about an entity, signed by a Trust Anchor
+   - Trust Anchors: think Root cert that TPM chains to.
 - Being able to produce an Attestation report alone is not sufficient
    - The report must be Verified to prove the constituent claims
 - Verification may be non-trivial, relying on additional endorsements, and so
@@ -191,6 +192,9 @@ https://www.ietf.org/rfc/rfc9334.html
   provisioning REST interface.
 - Attestation of evidence is performed via the verification REST interface.
 - Veraison implements separate endpoints for provisioning and verification.
+- The policy in Veraison is implemented as "attestation scheme" pluggable
+  interfaces, which can optionally be supplemented by an OPA policy file.
+- "pluggable interfaces" maybe packaged as plugins or built into Veraison.
 
 -->
 ---
@@ -275,9 +279,13 @@ are not relevant to the logical flow.
   component "X" -  has reference values - [list of values]
   ```
 - Also contains metadata (provisioner identity, versioning, etc.)
+- Adopted by IETF RATS and TCG working groups
 - https://github.com/veraison/corim
 
 <!--
+RATS: Remote Attestation Procedures
+TCG: Trusted Computing Group
+
 CBOR (RFC8949): https://www.rfc-editor.org/rfc/rfc8949.html
 COSE (RFC8152): https://www.rfc-editor.org/rfc/rfc8152.html
 -->
@@ -499,11 +507,16 @@ Write a Go executable that
 - Implements `IEndorsementHandler` and `IEvidenceHandler` interfaces, and
 - Serves them as plugins
 
+Can use existing implementations as examples and/or functionality re-use:
+
+- PSA (profiles 1 & 2), CCA, EnactTrust TPM, Parsec TPM, TCG DICE
+
 ---
 ## Implementing an Attestation Scheme
 <!-- _class: evensmallercode -->
 
 ```go
+// Attestation Scheme plugin implementation
 package main
 
 import (
@@ -528,6 +541,11 @@ func main() {
 	plugin.Serve()
 }
 ```
+
+<!--
+This illustrates the outline for a Go executable that can be loaded as a plugin
+providing an attestation scheme.
+-->
 
 ---
 
@@ -584,6 +602,14 @@ type Endorsement struct {
 <!--
 Note: these structure have been altered from their actual definitions in code
 for simplicity.
+
+ReferenceValues:
+- reference, or "golden" measurements
+- additional metadata  associated with evidence
+
+Trust Anchors:
+- cryptographic root of trust for validating evidence
+- a public key or a root cert (e.g. that is chained to by the TPM)
 
 Endorsement field:
 
