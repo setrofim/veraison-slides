@@ -31,9 +31,9 @@ section.smallerbullet li {
 
 - Introduction
 - Veraison Remote Attestation Service Overview
-    * Provisioning
-    * Verification
-    * Attestation schemes & policies
+    - Provisioning
+    - Verification
+    - Attestation schemes & policies
 - Extending Veraison to match your remote attestation use case
 - Libraries and tooling provided by the Veraison Project
 
